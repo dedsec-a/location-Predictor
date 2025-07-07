@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import pickle
+import gzip  # ✅ For .pkl.gz
 import numpy as np
 import uvicorn
 
@@ -10,13 +11,13 @@ import uvicorn
 # Load models at startup
 # -------------------------------
 
-with open("ontime_model.pkl", "rb") as f:
+with gzip.open("ontime_model.pkl.gz", "rb") as f:
     ontime_bundle = pickle.load(f)
 
 ontime_model = ontime_bundle['model']
 ontime_encoders = ontime_bundle['encoders']
 
-with open("store_model.pkl", "rb") as f:
+with gzip.open("store_model.pkl.gz", "rb") as f:
     store_model = pickle.load(f)
 
 # -------------------------------
@@ -81,4 +82,4 @@ def suggest_store_location(data: StoreRequest):
 # -------------------------------
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

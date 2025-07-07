@@ -5,12 +5,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 import pickle
+import gzip  # ✅ For compressed pickle
 
 # -------------------------------
 # 1️⃣ Delivery On-Time Classifier
 # -------------------------------
 
-# Load
+# Load data
 df = pd.read_csv("Train.csv")
 
 # Encode categorical columns
@@ -29,14 +30,14 @@ y = df_encoded['Reached.on.Time_Y.N']
 # Split & train
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-ontime_model = RandomForestClassifier()
+ontime_model = RandomForestClassifier(n_estimators=100, max_depth=10)  # smaller trees for smaller file!
 ontime_model.fit(X_train, y_train)
 
-# Save model & encoders
-with open("ontime_model.pkl", "wb") as f:
+# ✅ Save model & encoders — COMPRESSED
+with gzip.open("ontime_model.pkl.gz", "wb") as f:
     pickle.dump({"model": ontime_model, "encoders": label_encoders}, f)
 
-print("✅ Saved on-time delivery model as ontime_model.pkl")
+print("✅ Saved compressed on-time delivery model as ontime_model.pkl.gz")
 
 # -------------------------------
 # 2️⃣ Store Location Classifier
@@ -44,9 +45,11 @@ print("✅ Saved on-time delivery model as ontime_model.pkl")
 
 city_df = pd.read_csv("uscitypopdensity.csv")
 
-# Create dummy target: high potential city if pop > 500,000 AND moderate density
-city_df['HighPotential'] = ((city_df['2016 Population'] > 500000) & 
-                            (city_df['Population Density (Persons/Square Mile)'] < 10000)).astype(int)
+# Create dummy target
+city_df['HighPotential'] = (
+    (city_df['2016 Population'] > 500000) &
+    (city_df['Population Density (Persons/Square Mile)'] < 10000)
+).astype(int)
 
 features = ['2016 Population', 'Population Density (Persons/Square Mile)', 'Land Area (Square Miles)']
 X_city = city_df[features]
@@ -54,11 +57,11 @@ y_city = city_df['HighPotential']
 
 Xc_train, Xc_test, yc_train, yc_test = train_test_split(X_city, y_city, test_size=0.2, random_state=42)
 
-store_model = RandomForestClassifier()
+store_model = RandomForestClassifier(n_estimators=100, max_depth=10)  # smaller
 store_model.fit(Xc_train, yc_train)
 
-# Save
-with open("store_model.pkl", "wb") as f:
+# ✅ Save compressed
+with gzip.open("store_model.pkl.gz", "wb") as f:
     pickle.dump(store_model, f)
 
-print("✅ Saved store location model as store_model.pkl")
+print("✅ Saved compressed store location model as store_model.pkl.gz")
